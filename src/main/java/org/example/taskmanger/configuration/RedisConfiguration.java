@@ -1,6 +1,7 @@
 package org.example.taskmanger.configuration;
 
 import org.example.taskmanger.database.dto.TaskReadDto;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -16,6 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 @Configuration
+@ConditionalOnProperty(
+        name = "app.cache.type",
+        havingValue = "redis",
+        matchIfMissing = true
+)
 public class RedisConfiguration {
 
 @Bean
@@ -48,12 +54,30 @@ public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) 
                                     .fromSerializer(taskSerializer)
                     );
 
+    JavaType pageType = mapper.getTypeFactory()
+            .constructParametricType(
+                    org.springframework.data.domain.PageImpl.class,
+                    TaskReadDto.class
+            );
+
+    JacksonJsonRedisSerializer<?> pageSerializer =
+            new JacksonJsonRedisSerializer<>(mapper, pageType);
+
+    RedisCacheConfiguration tasksPagesConfiguration =
+            RedisCacheConfiguration.defaultCacheConfig()
+                    .entryTtl(Duration.ofMinutes(10))
+                    .serializeValuesWith(
+                            RedisSerializationContext.SerializationPair
+                                    .fromSerializer(pageSerializer)
+                    );
+
     return RedisCacheManager.builder(connectionFactory)
             .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig())
             .withInitialCacheConfigurations(
                     Map.of(
                             "tasksList", tasksListConfiguration,
-                            "task", taskConfiguration
+                            "task", taskConfiguration,
+                            "tasksPages", tasksPagesConfiguration
                     )
             )
             .build();

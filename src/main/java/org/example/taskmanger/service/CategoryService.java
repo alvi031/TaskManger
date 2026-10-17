@@ -1,9 +1,10 @@
 package org.example.taskmanger.service;
 
 import lombok.AllArgsConstructor;
-import org.example.taskmanger.database.entity.Category;
+import org.example.taskmanger.database.dto.CategoryReadDto;
 import org.example.taskmanger.database.repository.CategoryRepository;
 import org.example.taskmanger.exception.CategoryNotFoundException;
+import org.example.taskmanger.mapper.CategoryMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,13 +14,19 @@ import java.util.List;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
-    public List<Category> findAll(){
-        return categoryRepository.findAll();
+    public List<CategoryReadDto> findAll(){
+        return categoryRepository.findAll()
+                .stream()
+                .map(categoryMapper::map)
+                .toList();
     }
 
-    public Category findById(Long id){
-        return categoryRepository.findById(id).orElseThrow(() ->
+    public CategoryReadDto findById(Long id){
+        return categoryRepository.findById(id)
+                .map(categoryMapper::map)
+                .orElseThrow(() ->
                 new CategoryNotFoundException("Category with id " + id + " not found"));
     }
 

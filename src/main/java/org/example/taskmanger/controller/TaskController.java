@@ -2,9 +2,14 @@ package org.example.taskmanger.controller;
 
 import lombok.AllArgsConstructor;
 import org.example.taskmanger.database.dto.TaskCreateEditDto;
+import org.example.taskmanger.database.dto.TaskFilterDto;
 import org.example.taskmanger.database.dto.TaskReadDto;
 import org.example.taskmanger.database.entity.TaskStatus;
 import org.example.taskmanger.service.TasksService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,10 +28,15 @@ public class TaskController {
         return mappingResponseTask(tasksService.create(dto));
     }
 
-
     @GetMapping
-    public ResponseEntity<List<TaskReadDto>> findAll(){
-        return mappingResponseListTask(tasksService.findAll());
+    public ResponseEntity<Page<TaskReadDto>> findAll(
+            @ModelAttribute TaskFilterDto filterDto,
+            @PageableDefault(
+            size = 10,
+            sort = "createdAt",
+            direction = Sort.Direction.DESC
+    ) Pageable pageable) {
+        return ResponseEntity.ok(tasksService.findAll(filterDto, pageable));
     }
 
     @GetMapping("/{id}")
@@ -42,6 +52,16 @@ public class TaskController {
     @GetMapping("/category/{id}")
     public ResponseEntity<List<TaskReadDto>> findByCategoryId(@PathVariable Long id){
         return mappingResponseListTask(tasksService.findByCategoryId(id));
+    }
+
+    @GetMapping("/user/{userId}/status/{status}")
+    public ResponseEntity<List<TaskReadDto>> findAllByUserIdAndStatus(
+            @PathVariable Long userId,
+            @PathVariable TaskStatus status
+    ) {
+        return ResponseEntity.ok(
+                tasksService.findAllByUserIdAndStatus(userId, status)
+        );
     }
 
     @PutMapping("/{id}")

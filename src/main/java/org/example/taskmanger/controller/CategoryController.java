@@ -1,7 +1,7 @@
 package org.example.taskmanger.controller;
 
 import lombok.AllArgsConstructor;
-import org.example.taskmanger.database.entity.Category;
+import org.example.taskmanger.database.dto.CategoryReadDto;
 import org.example.taskmanger.service.CategoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/categories/")
+@RequestMapping("/categories")
 @AllArgsConstructor
 public class CategoryController {
 
     private final CategoryService categoryService;
 
     @GetMapping
-    public ResponseEntity<List<Category>> findAll(){
+    public ResponseEntity<List<CategoryReadDto>> findAll(){
         return new ResponseEntity<>(categoryService.findAll(),HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Category> findById(@PathVariable Long id) {
+    public ResponseEntity<CategoryReadDto> findById(@PathVariable Long id) {
         return new ResponseEntity<>(categoryService.findById(id), HttpStatus.OK);
     }
 
