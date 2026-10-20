@@ -14,7 +14,6 @@ import org.example.taskmanger.database.repository.UserRepository;
 import org.example.taskmanger.dto.event.TaskEvent;
 import org.example.taskmanger.dto.event.TaskEventType;
 import org.example.taskmanger.exception.TaskNotFoundException;
-import org.example.taskmanger.kafka.TaskEventProducer;
 import org.example.taskmanger.mapper.TaskMapper;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -37,7 +36,7 @@ public class TasksService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final TaskMapper taskMapper;
-    private final TaskEventProducer taskEventProducer;
+    private final OutboxService outboxService;
 
     @Transactional
     @CacheEvict(value = "tasksPages", allEntries = true)
@@ -67,8 +66,7 @@ public class TasksService {
                 LocalDateTime.now()
         );
 
-        taskEventProducer.send(event);
-
+        outboxService.save(event);
         return taskMapper.map(savedTask);
     }
 
@@ -153,8 +151,8 @@ public class TasksService {
                     LocalDateTime.now()
             );
 
-            taskEventProducer.send(event);
-            log.info("Task {} completed; completion event published", updatedTask.getId());
+            outboxService.save(event);
+            log.info("Task {} completed; completion event saved to outbox", updatedTask.getId());
         }
 
         return taskMapper.map(updatedTask);
